@@ -255,4 +255,93 @@ void main() {
       expect(closings, isEmpty);
     },
   );
+  test(
+    'createClosing rejects duplicate closing for the same booth and date',
+    () async {
+      final boothId = await createTestBooth();
+      final account = await database.select(database.accounts).getSingle();
+      final userId = await createTestUser(account.id);
+
+      final closingDate = DateTime(2026, 9, 11);
+
+      final data = DailyClosingData(
+        boothId: boothId,
+        closedByUserId: userId,
+        closingDate: closingDate,
+        openingCash: 5000,
+        cashSales: 10000,
+        cashExpenses: 1000,
+        totalSales: 10000,
+        totalExpenses: 1000,
+        expectedCash: 14000,
+        actualCash: 14000,
+        cashDifference: 0,
+      );
+
+      await closingRepository.createClosing(data);
+
+      expect(
+        () => closingRepository.createClosing(data),
+        throwsA(isA<SqliteException>()),
+      );
+    },
+  );
+
+  test('getClosing does not match the previous day', () async {
+    final boothId = await createTestBooth();
+    final account = await database.select(database.accounts).getSingle();
+    final userId = await createTestUser(account.id);
+
+    await closingRepository.createClosing(
+      DailyClosingData(
+        boothId: boothId,
+        closedByUserId: userId,
+        closingDate: DateTime(2026, 9, 11),
+        openingCash: 5000,
+        cashSales: 10000,
+        cashExpenses: 1000,
+        totalSales: 10000,
+        totalExpenses: 1000,
+        expectedCash: 14000,
+        actualCash: 14000,
+        cashDifference: 0,
+      ),
+    );
+
+    final closing = await closingRepository.getClosing(
+      boothId: boothId,
+      date: DateTime(2026, 9, 10),
+    );
+
+    expect(closing, isNull);
+  });
+
+  test('getClosing does not match the next day', () async {
+    final boothId = await createTestBooth();
+    final account = await database.select(database.accounts).getSingle();
+    final userId = await createTestUser(account.id);
+
+    await closingRepository.createClosing(
+      DailyClosingData(
+        boothId: boothId,
+        closedByUserId: userId,
+        closingDate: DateTime(2026, 9, 11),
+        openingCash: 5000,
+        cashSales: 10000,
+        cashExpenses: 1000,
+        totalSales: 10000,
+        totalExpenses: 1000,
+        expectedCash: 14000,
+        actualCash: 14000,
+        cashDifference: 0,
+      ),
+    );
+
+    final closing = await closingRepository.getClosing(
+      boothId: boothId,
+      date: DateTime(2026, 9, 12),
+    );
+
+    expect(closing, isNull);
+  });
 }
