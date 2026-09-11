@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # senang_aa
 
 A new Flutter project.
@@ -15,3 +16,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Senang
+Senang is a Flutter-based, local-first POS system with customizable inventory, sales management, expenses, daily closing, and reporting.
+>>>>>>> 088283b34b7337d36b2dd53601e9ffb7c2794627
