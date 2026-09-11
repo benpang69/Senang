@@ -61,146 +61,120 @@ The goal of Senang is to provide a simple and flexible POS system where users ca
 
 ## Architecture
 
-Senang follows a local-first architecture.
+Senang follows a local-first architecture designed to keep the application simple, reliable, and usable without an internet connection.
 
 ### C4 Context Diagram
 
 ```mermaid
-C4Context
+flowchart LR
 
-title Senang - System Context
+    User["POS User"]
 
-Person(user, "POS User", "Business owner or staff member")
+    Senang["Senang<br/>Local-first POS Application"]
 
-System(senang, "Senang", "Local-first POS application for managing booths, inventory, sales, expenses and daily closing")
+    Share["Email / Share Service"]
 
-System_Ext(share, "Email / Share Service", "Mobile email and sharing applications")
-
-Rel(user, senang, "Uses")
-Rel(senang, share, "Shares reports through")
+    User -->|"Uses"| Senang
+    Senang -->|"Shares reports through"| Share
 ```
 
 ### C4 Container Diagram
 
 ```mermaid
-C4Container
+flowchart TD
 
-title Senang - Container Diagram
+    User["POS User"]
 
-Person(user, "POS User", "Business owner or staff member")
+    subgraph Senang["Senang Mobile Application"]
+        UI["Flutter UI"]
+        App["Application Services"]
+        Repo["Repositories"]
+        Drift["Drift Database Layer"]
+        SQLite[("SQLite Database")]
+        Report["Report Service"]
+    end
 
-System_Boundary(senang, "Senang Mobile Application") {
+    Share["Email / Share Service"]
 
-    Container(ui, "Flutter UI", "Flutter / Dart",
-        "Mobile interface for POS, inventory, booths, sales, expenses and reports")
-
-    Container(app, "Application Services", "Dart",
-        "Contains business logic for checkout, inventory, expenses, closing and reporting")
-
-    Container(repo, "Repositories", "Dart",
-        "Provides an abstraction between business logic and database access")
-
-    Container(drift, "Drift Database Layer", "Drift / Dart",
-        "Provides type-safe database access and queries")
-
-    ContainerDb(sqlite, "SQLite Database", "SQLite",
-        "Stores accounts, booths, products, sales, expenses and other business data")
-
-    Container(report, "Report Service", "Dart",
-        "Generates PDF and Excel reports")
-}
-
-System_Ext(share, "Email / Share Service", "Mobile email and sharing applications")
-
-Rel(user, ui, "Uses")
-Rel(ui, app, "Calls")
-Rel(app, repo, "Uses")
-Rel(repo, drift, "Queries")
-Rel(drift, sqlite, "Reads and writes")
-Rel(app, report, "Requests reports")
-Rel(report, share, "Shares reports through")
+    User -->|"Uses"| UI
+    UI -->|"Calls"| App
+    App -->|"Uses"| Repo
+    Repo -->|"Queries"| Drift
+    Drift -->|"Reads and writes"| SQLite
+    App -->|"Requests reports"| Report
+    Report -->|"Shares reports through"| Share
 ```
 
 ### C4 Component Diagram
 
 ```mermaid
-C4Component
+flowchart TD
 
-title Senang - Application Services Components
+    UI["Flutter UI"]
 
-Container_Boundary(app, "Application Services") {
+    subgraph App["Application Services"]
+        Booth["Booth Service"]
+        Product["Product Service"]
+        Inventory["Inventory Service"]
+        POS["POS Service"]
+        Sales["Sales Service"]
+        Expense["Expense Service"]
+        Closing["Daily Closing Service"]
+        Report["Report Service"]
+    end
 
-    Component(booth, "Booth Service", "Dart",
-        "Manages booths and booth-specific data")
+    Repo["Repositories"]
+    DB[("SQLite Database")]
+    Share["Email / Share Service"]
 
-    Component(product, "Product Service", "Dart",
-        "Manages products, categories and customizable product fields")
+    UI --> Booth
+    UI --> Product
+    UI --> Inventory
+    UI --> POS
+    UI --> Sales
+    UI --> Expense
+    UI --> Closing
+    UI --> Report
 
-    Component(inventory, "Inventory Service", "Dart",
-        "Manages stock quantities and stock movements")
+    POS -->|"Gets product information"| Product
+    POS -->|"Updates stock"| Inventory
+    POS -->|"Creates sale records"| Sales
 
-    Component(pos, "POS Service", "Dart",
-        "Handles cart operations, checkout and payments")
+    Closing -->|"Gets daily sales"| Sales
+    Closing -->|"Gets daily expenses"| Expense
 
-    Component(sales, "Sales Service", "Dart",
-        "Manages completed sales and sales history")
+    Report -->|"Gets sales data"| Sales
+    Report -->|"Gets expense data"| Expense
+    Report -->|"Gets closing data"| Closing
 
-    Component(expense, "Expense Service", "Dart",
-        "Manages business expenses")
+    Booth --> Repo
+    Product --> Repo
+    Inventory --> Repo
+    POS --> Repo
+    Sales --> Repo
+    Expense --> Repo
+    Closing --> Repo
+    Report --> Repo
 
-    Component(closing, "Daily Closing Service", "Dart",
-        "Calculates and records end-of-day totals")
-
-    Component(report, "Report Service", "Dart",
-        "Generates PDF and Excel reports")
-}
-
-Container(ui, "Flutter UI", "Flutter / Dart",
-    "Mobile user interface")
-
-Container(repo, "Repositories", "Dart",
-    "Database repository layer")
-
-ContainerDb(db, "SQLite Database", "SQLite",
-    "Local application database")
-
-System_Ext(share, "Email / Share Service", "Mobile sharing applications")
-
-Rel(ui, booth, "Uses")
-Rel(ui, product, "Uses")
-Rel(ui, inventory, "Uses")
-Rel(ui, pos, "Uses")
-Rel(ui, sales, "Uses")
-Rel(ui, expense, "Uses")
-Rel(ui, closing, "Uses")
-Rel(ui, report, "Uses")
-
-Rel(pos, product, "Gets product information")
-Rel(pos, inventory, "Updates stock")
-Rel(pos, sales, "Creates sale records")
-
-Rel(closing, sales, "Gets daily sales")
-Rel(closing, expense, "Gets daily expenses")
-
-Rel(report, sales, "Gets sales data")
-Rel(report, expense, "Gets expense data")
-Rel(report, closing, "Gets closing data")
-
-Rel(booth, repo, "Uses")
-Rel(product, repo, "Uses")
-Rel(inventory, repo, "Uses")
-Rel(pos, repo, "Uses")
-Rel(sales, repo, "Uses")
-Rel(expense, repo, "Uses")
-Rel(closing, repo, "Uses")
-Rel(report, repo, "Uses")
-
-Rel(repo, db, "Reads and writes")
-Rel(report, share, "Shares generated reports")
+    Repo -->|"Reads and writes"| DB
+    Report -->|"Shares generated reports"| Share
 ```
 
-The application is designed to keep the user interface, business logic, and database access separated so that the project can be expanded more easily in the future.
+### Architecture Layers
 
+```text
+Flutter UI
+    ↓
+Application Services
+    ↓
+Repositories
+    ↓
+Drift
+    ↓
+SQLite
+```
+
+The application is designed so that the user interface does not directly access the database. Business logic is handled by application services, while repositories manage communication with the local database.
 ## Project Structure
 
 ```text
